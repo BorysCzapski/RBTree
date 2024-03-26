@@ -67,45 +67,46 @@ class RBTree {
         x.parent = y; // Swap places
     }
 
-    public void insertFixViolation(RBTreeNode node) { //Method for fixing the violations
-        while (node.parent.color == NodeColor.red) { //Checks whether you have to use colorswap or rotation
-            if (node.parent == node.parent.parent.left) { //Checks if the parent of the node is the left child of grandparent
-                RBTreeNode node2 = node.parent.parent.right; //Sets the new node to the right child of the first node grandparent
-                if (node2.color == NodeColor.red) { // Case of colorswap
+    public void insertFixViolation(RBTreeNode node) {
+        while (node != rootNode && node.parent.color != NodeColor.black ) {
+            if (node.parent == node.parent.parent.left) {
+                RBTreeNode uncle = node.parent.parent.right;
+
+                if (uncle != null && uncle.color != NodeColor.black) { // Case 1: Uncle red
                     node.parent.color = NodeColor.black;
-                    node2.color = NodeColor.black;
+                    uncle.color = NodeColor.black;
                     node.parent.parent.color = NodeColor.red;
                     node = node.parent.parent;
-                } else { //Cases for rotations, when the node parent is left child
-                    if (node == node.parent.right) { //If for case when the uncle of the node is black or not exists
+                } else { // Case 2 / 3: Uncle black or not exists
+                    if (node == node.parent.right) {
                         node = node.parent;
-                        rotateL(node); //Rotates in left direction if the node is right child and uncle is black
+                        rotateL(node);
                     }
                     node.parent.color = NodeColor.black;
                     node.parent.parent.color = NodeColor.red;
-                    rotateR(node.parent.parent); //Rotates in right direction if the node is left child and uncle is black
+                    rotateR(node.parent.parent);
                 }
-            } else { //Else when node parent is right child
-                RBTreeNode node2 = node.parent.parent.left;
-                if (node2.color == NodeColor.red) { //Colorswap when uncle is red
+            } else {
+                RBTreeNode uncle = node.parent.parent.left;
+
+                if (uncle != null && uncle.color != NodeColor.black) { // Case 1: Uncle red
                     node.parent.color = NodeColor.black;
-                    node2.color = NodeColor.black;
+                    uncle.color = NodeColor.black;
                     node.parent.parent.color = NodeColor.red;
                     node = node.parent.parent;
-                } else { //Case for uncle is black or not exists
+                } else { // Case 2 / 3: Uncle black or not exists
                     if (node == node.parent.left) {
                         node = node.parent;
-                        rotateR(node); //Rotates in right direction if the node is left child and uncle is black
+                        rotateR(node);
                     }
                     node.parent.color = NodeColor.black;
                     node.parent.parent.color = NodeColor.red;
-                    rotateL(node.parent.parent); //Rotates in left direction if the node is right child and uncle is black
+                    rotateL(node.parent.parent);
                 }
             }
         }
-
-        }
-
+        rootNode.color = NodeColor.black; // Ensure root is always black
+    }
         public void insert ( int key, int value){ //Node insert method
             RBTreeNode z = new RBTreeNode(key, value); //New node declaration
             RBTreeNode y = this.nullNode; //An null node
@@ -134,15 +135,77 @@ class RBTree {
             insertFixViolation(z); //Call the method that fixes the violation that occured when new node was added
         }
 
+        //Full delete procedure mechanism, contains transplant, delete, deleteFixViolation, findMin
+    public void transplantNode(RBTreeNode node, RBTreeNode node2){ //Transplant method, needed for nodes to be swapped
+        if (node.parent == this.nullNode){ //Check if the deleted node is the root, so that we make node2 as a root
+            this.rootNode = node2;
+        } else if (node == node.parent.left) { //Node 2 becomes the left child of node's parent when the transplant happens and node is parents' left child
+            node.parent.left = node2;
+        }else{
+            node.parent.right = node2;
+        }
+        node2.parent = node.parent; //Set the child node (node2) of the deleted node to a child of the same parent
+    }
 
+    public RBTreeNode findMin(RBTreeNode node){ //Find the leftmost child (smallest), for future use when deleting
+        while(node.left != this.nullNode){
+            node = node.left; //Assign the next left child to the node
+        }
+        return node;
+    }
+
+    //Delete method and also DeleteFixViolation to implement, 27.03.2024
+
+
+    //Height of the tree methods
+
+    public int height() {return getHeightOfTree(rootNode); }
+
+    private int getHeightOfTree(RBTreeNode node){
+        if (node == nullNode){
+            return 0; //Height is 0 when there are no nodes lol
+        } else{
+            int leftHeight = getHeightOfTree(node.left); //Height from the left child node
+            int rightHeight = getHeightOfTree(node.right); //Height from the right child node
+            return Math.max(leftHeight, rightHeight) + 1; //Return the greater value from left and right heights, add 1 for including the root node
+        }
+    }
+
+    //Additional method for printing the contents of the tree
+
+    public void printTree() { printNode(rootNode); } //Method for printing starting from the root
+
+    private void printNode(RBTreeNode node){
+        if (node != nullNode){
+            printNode(node.left);
+            System.out.println(STR."\{node.key}, \{node.value}");
+            printNode(node.right);
+        }
+    }
 
 }
 
 
 public class Main {
     public static void main(String[] args) {
-
-        System.out.printf("Red-Black Tree: ");
+        //Declaration of object with class of RBTree
+        RBTree tree1 = new RBTree();
+        //Insert some nodes
+        tree1.insert(10, 15);
+        tree1.insert(7, 98);
+        tree1.insert(15, 24);
+        tree1.insert(13, 75);
+        tree1.insert(6, 67);
+        tree1.insert(3, 63);
+        tree1.insert(70, 45);
+        tree1.insert(14, 22);
+        tree1.insert(8, 1);
+        //Print out tree and details of it
+        System.out.println("Red-Black Tree: ");
+        System.out.println("Height of the Tree: " + tree1.height());
+        //Additional function for printing the tree, to show that nodes are really in the tree tho
+        System.out.println("Tree contents from smallest to largest by the key: ");
+        tree1.printTree();
 
     }
 }
