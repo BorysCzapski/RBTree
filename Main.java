@@ -154,7 +154,126 @@ class RBTree {
         return node;
     }
 
-    //Delete method and also DeleteFixViolation to implement, 27.03.2024
+    //Delete method and also DeleteFixViolation to implement in future lol
+
+    public void deleteFixViolation(RBTreeNode node){
+        while (node != this.nullNode && node.color == NodeColor.black){
+            if(node.equals(node.parent.left)){
+                RBTreeNode node2 = node.parent.right;
+                if(node2.color.equals(NodeColor.red)){
+                    node2.color = NodeColor.black;
+                    node.parent.color = NodeColor.red;
+                    rotateL(node.parent);
+                    node2 = node.parent.right;
+                }
+                if(node2.left.color.equals(NodeColor.black) && node2.right.color.equals(NodeColor.black)){
+                    node2.color = NodeColor.red;
+                    node = node.parent;
+                }else{
+                    if (node2.right.color.equals(NodeColor.black)){
+                        node2.left.color = NodeColor.black;
+                        node2.color = NodeColor.red;
+                        rotateR(node2);
+                        node2 = node.parent.right;
+                    }
+                    node2.color = node.parent.color;
+                    node.parent.color = NodeColor.black;
+                    node2.right.color = NodeColor.black;
+                    rotateL(node.parent);
+                    node = this.rootNode;
+                }
+            }else{
+                RBTreeNode node2 = node.parent.left;
+                if(node2.color.equals(NodeColor.red)){
+                    node2.color = NodeColor.black;
+                    node.parent.color = NodeColor.red;
+                    rotateR(node.parent);
+                    node2 = node.parent.left;
+                }
+                if (node2.right.color.equals(NodeColor.black) && node2.left.color.equals(NodeColor.black)){
+                    node2.color = NodeColor.red;
+                    node = node.parent;
+                }else{
+                    if (node2.left.color.equals(NodeColor.black)){
+                        node2.right.color = NodeColor.black;
+                        node2.color = NodeColor.red;
+                        rotateL(node2);
+                        node2 = node.parent.left;
+                    }
+                    node2.color = node.parent.color;
+                    node.parent.color = NodeColor.black;
+                    node2.left.color = NodeColor.black;
+                    rotateR(node.parent);
+                    node = this.rootNode;
+                }
+            }
+        }
+        node.color = NodeColor.black;
+    }
+
+    public void delete(int key){ //Delete method needs to have passed a key to know which node to delete
+        RBTreeNode node = findNode(key); // A new node, which is found by findNode method
+        if (node != nullNode){ //Check if node is not null
+            RBTreeNode node2 = node; //Declare two other nodes
+            RBTreeNode node3;
+            NodeColor node2Color = node2.color;
+            if (node.left.equals(this.nullNode)){
+                node3 = node.right;
+                transplantNode(node, node.right);
+            } else if (node.right.equals(this.nullNode)) {
+                node3 = node.left;
+                transplantNode(node, node.left);
+            }else{
+                node2 = findMin(node.right);
+                node2Color = node2.color;
+                node3 = node2.right;
+                if (node2.parent.equals(node)){
+                    node3.parent = node;
+                }else{
+                    transplantNode(node2, node2.right);
+                    node2.right = node.right;
+                    node2.right.parent = node2;
+                }
+                transplantNode(node, node2);
+                node2.left = node.left;
+                node2.left.parent = node2;
+                node2.color = node.color;
+            }
+            if (node2Color.equals(NodeColor.black)){
+                deleteFixViolation(node3);
+            }
+        }
+    }
+
+    public RBTreeNode findNode(int key){ //Node finding method
+        RBTreeNode node = rootNode; // Start by selecting the root node
+        while (node != nullNode && key != node.key){ //While node is not null and the key is not equal to the current node key, run the loop
+            if (key < node.key){ // Go to left child if key is lower than current node key
+                node = node.left;
+            }
+            else{
+                node = node.right; // Else go to right child of node
+            }
+        }
+        return node; // After the loop ends return the node
+    }
+
+
+    //Only for debugging -> Node color checker
+
+    public void checkColor() {checkColorOfNode(rootNode);}
+
+    private void checkColorOfNode(RBTreeNode node){
+        if(node != nullNode){
+            checkColorOfNode(node.left);
+            System.out.println(node.key + ": " + node.color);
+            checkColorOfNode(node.right);
+        }
+    }
+
+
+
+
 
 
     //Height of the tree methods
@@ -200,12 +319,17 @@ public class Main {
         tree1.insert(70, 45);
         tree1.insert(14, 22);
         tree1.insert(8, 1);
+
+        tree1.delete(8);
+        tree1.delete(15);
         //Print out tree and details of it
         System.out.println("Red-Black Tree: ");
         System.out.println("Height of the Tree: " + tree1.height());
-        //Additional function for printing the tree, to show that nodes are really in the tree tho
+        //Additional function for printing the tree, to show that nodes are really in the tree tho, good for debugging also for the inorder method
         System.out.println("Tree contents from smallest to largest by the key: ");
         tree1.printTree();
+        System.out.println("Colors of nodes (for debugging): ");
+        tree1.checkColor();
 
     }
 }
